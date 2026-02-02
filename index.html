@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Valentine 💌</title>
+  <style>
+    :root { --text:#222; --card: rgba(255,255,255,0.78); --yes:#22c55e; --yes2:#16a34a; --no:#ef4444; }
+    * { box-sizing: border-box; }
+
+    body{
+      margin:0;
+      min-height:100svh;
+      display:grid;
+      place-items:center;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      overflow:hidden;
+
+      /* ✅ Image de fond : mets ton fichier dans le repo et appelle-le "fond.jpg" */
+      background: url("fond.jpg") center / cover no-repeat fixed;
+    }
+
+    body::before{
+      content:"";
+      position:fixed; inset:0;
+      background: rgba(255, 230, 240, 0.40);
+      backdrop-filter: blur(2px);
+      pointer-events:none;
+    }
+
+    .wrap{
+      position:relative;
+      width:min(720px, 92vw);
+      padding:28px 22px;
+      border-radius:24px;
+      background:var(--card);
+      border:1px solid rgba(255,182,193,0.55);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.10);
+      text-align:center;
+      z-index:1;
+    }
+
+    h1{ margin:0 0 10px; font-size:clamp(26px, 4vw, 44px); }
+    p{ margin:0 0 16px; opacity:0.85; }
+
+    .arena{
+      position:relative;
+      width:100%;
+      height:min(340px, 52vh);
+      border-radius:18px;
+      background: rgba(255,255,255,0.55);
+      border:1px dashed rgba(255,105,180,0.35);
+      overflow:hidden;
+      display:grid;
+      place-items:center;
+      padding:14px;
+    }
+
+    #yesBtn{
+      z-index:2;
+      border:none;
+      color:#fff;
+      background: linear-gradient(180deg, var(--yes), var(--yes2));
+      padding:14px 22px;
+      border-radius:999px;
+      font-size:18px;
+      font-weight:800;
+      cursor:pointer;
+      transform: scale(1);
+      transition: transform 180ms ease, box-shadow 180ms ease;
+      box-shadow: 0 10px 30px rgba(34,197,94,0.25);
+      user-select:none;
+    }
+
+    #noBtn{
+      position:absolute;
+      z-index:3;
+      border:none;
+      color:#fff;
+      background: linear-gradient(180deg, #ff6b6b, var(--no));
+      padding:12px 18px;
+      border-radius:999px;
+      font-size:16px;
+      font-weight:800;
+      cursor:pointer;
+      user-select:none;
+      transition: left 120ms ease, top 120ms ease, transform 120ms ease, opacity 200ms ease;
+      box-shadow: 0 10px 26px rgba(239,68,68,0.18);
+      white-space:nowrap;
+    }
+
+    .status{ margin-top:14px; font-weight:650; min-height:1.4em; }
+    .hidden{ opacity:0; pointer-events:none; transform: scale(0.85); }
+
+    .heart{
+      position:absolute;
+      left:50%;
+      top:55%;
+      font-size:18px;
+      opacity:0;
+      transform: translate(-50%, -50%) scale(1);
+      animation: floatUp 1200ms ease forwards;
+      pointer-events:none;
+      z-index:5;
+      filter: drop-shadow(0 8px 14px rgba(0,0,0,0.10));
+    }
+    @keyframes floatUp{
+      0%{ opacity:0; transform: translate(-50%, -50%) scale(0.9); }
+      15%{ opacity:1; }
+      100%{ opacity:0; transform: translate(calc(-50% + var(--dx)), calc(-50% - 180px)) scale(1.4); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1>Will you be my Valentine? 💌</h1>
+    <p>Promis, c’est rapide 😇</p>
+
+    <div class="arena" id="arena">
+      <button id="yesBtn" type="button">Yes</button>
+      <button id="noBtn" type="button">No</button>
+    </div>
+
+    <div class="status" id="status"></div>
+  </div>
+
+  <script>
+    const arena = document.getElementById('arena');
+    const yesBtn = document.getElementById('yesBtn');
+    const noBtn  = document.getElementById('noBtn');
+    const status = document.getElementById('status');
+
+    let tries = 0;
+    let yesScale = 1;
+
+    const noPhrases = [
+      "No 😇", "Nope 🏃", "Essaie encore 😏", "Trop tard 😌", "Impossible 🙅",
+      "Pas aujourd’hui 😼", "Raté 😭", "Non non non 😵", "Tu veux pas plutôt… Yes? 💚"
+    ];
+
+    function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+    function applyYesScale(){
+      yesBtn.style.transform = `scale(${yesScale})`;
+      yesBtn.style.boxShadow = yesScale > 2.2
+        ? "0 18px 60px rgba(34,197,94,0.35)"
+        : "0 10px 30px rgba(34,197,94,0.25)";
+    }
+
+    function placeNoRandomly(){
+      const a = arena.getBoundingClientRect();
+      const b = noBtn.getBoundingClientRect();
+      const maxX = a.width  - b.width;
+      const maxY = a.height - b.height;
+      const x = Math.random() * maxX;
+      const y = Math.random() * maxY;
+      noBtn.style.left = `${x}px`;
+      noBtn.style.top  = `${y}px`;
+    }
+
+    function spawnHearts(count=10){
+      const hearts = ["💖","💘","💝","💕","💗","💓"];
+      for(let i=0;i<count;i++){
+        const el=document.createElement('div');
+        el.className='heart';
+        el.textContent=hearts[Math.floor(Math.random()*hearts.length)];
+        el.style.setProperty('--dx', (Math.random()*220-110).toFixed(0)+'px');
+        el.style.left=(50+(Math.random()*18-9)).toFixed(1)+'%';
+        el.style.top =(55+(Math.random()*10-5)).toFixed(1)+'%';
+        el.style.fontSize=(16+Math.random()*20).toFixed(0)+'px';
+        arena.appendChild(el);
+        el.addEventListener('animationend', ()=> el.remove());
+      }
+    }
+
+    function dodgeNo(e){
+      e.preventDefault();
+      tries++;
+
+      noBtn.textContent = noPhrases[tries % noPhrases.length];
+      noBtn.style.transform = `rotate(${(Math.random()*16-8).toFixed(0)}deg)`;
+
+      yesScale = clamp(yesScale + (0.14 + tries*0.01), 1, 6);
+      applyYesScale();
+
+      placeNoRandomly();
+      spawnHearts(tries % 2 === 0 ? 6 : 0);
+
+      if(tries >= 9){
+        noBtn.classList.add('hidden');
+        yesScale = 5.2;
+        applyYesScale();
+        status.textContent = "Ok… il ne reste plus que YES 😌";
+      } else {
+        status.textContent = "“No” est un peu timide… 🙈";
+      }
+    }
+
+    noBtn.addEventListener('mouseenter', dodgeNo);
+    noBtn.addEventListener('touchstart', dodgeNo, { passive:false });
+    noBtn.addEventListener('click', dodgeNo);
+
+    yesBtn.addEventListener('click', () => {
+      window.location.href = "trop-de-chance.html";
+    });
+
+    window.addEventListener('resize', () => {
+      if(!noBtn.classList.contains('hidden')) placeNoRandomly();
+    });
+
+    noBtn.style.left = "12px"; noBtn.style.top = "12px";
+    requestAnimationFrame(placeNoRandomly);
+    applyYesScale();
+  </script>
+</body>
+</html>
